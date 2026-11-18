@@ -1,4 +1,4 @@
-# Körjournal
+# Mileage Registration
 
 PWA for registering trips: scan the odometer with the camera, check the address, save.
 Exports a körjournal in `.xlsx` format based on Skatteverket's requirements. All data stays on the phone (IndexedDB).
