@@ -2,7 +2,7 @@ import './style.css';
 import { registerSW } from 'virtual:pwa-register';
 import * as db from './db';
 import type { Trip, TripType } from './db';
-import { startCamera, stopCamera, captureGuide, cameraRunning } from './camera';
+import { startCamera, stopCamera, captureGuide, cameraRunning, setZoom, MAX_ZOOM, hasTorch, setTorch } from './camera';
 import { preloadOcr, readOdometer } from './ocr';
 import { locate, type Located } from './geo';
 import { buildXlsx, shareOrDownload, fmtDate, fmtTime } from './export';
@@ -110,11 +110,58 @@ async function ensureCamera() {
   try {
     await startCamera(video);
     $('cam-retry').hidden = true;
+    $('torch').hidden = !hasTorch();
+    $('torch').setAttribute('aria-pressed', 'false');
+    applyZoom(zoom);
   } catch {
     $('cam-retry').hidden = false;
   }
 }
 $('cam-retry').addEventListener('click', ensureCamera);
+
+// Zoom: slider + pinch on the viewfinder. Remembered between visits (per device convenience only).
+const zoomInput = $<HTMLInputElement>('zoom');
+zoomInput.max = String(MAX_ZOOM);
+let zoom = 1;
+try {
+  zoom = Math.min(MAX_ZOOM, Math.max(1, Number(localStorage.getItem('zoom')) || 1));
+} catch {
+  /* storage unavailable */
+}
+function applyZoom(z: number) {
+  zoom = Math.min(MAX_ZOOM, Math.max(1, z));
+  zoomInput.value = String(zoom);
+  $('zoom-label').textContent = `${zoom.toFixed(1).replace('.0', '')}×`;
+  if (cameraRunning()) setZoom(video, zoom);
+  try {
+    localStorage.setItem('zoom', String(zoom));
+  } catch {
+    /* storage unavailable */
+  }
+}
+applyZoom(zoom);
+zoomInput.addEventListener('input', () => applyZoom(Number(zoomInput.value)));
+
+const viewfinder = document.querySelector<HTMLElement>('.viewfinder')!;
+let pinch: { dist: number; zoom: number } | null = null;
+const touchDist = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+viewfinder.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 2) pinch = { dist: touchDist(e.touches), zoom };
+}, { passive: true });
+viewfinder.addEventListener('touchmove', (e) => {
+  if (pinch && e.touches.length === 2) {
+    e.preventDefault();
+    applyZoom(pinch.zoom * (touchDist(e.touches) / pinch.dist));
+  }
+}, { passive: false });
+viewfinder.addEventListener('touchend', (e) => {
+  if (e.touches.length < 2) pinch = null;
+});
+
+$('torch').addEventListener('click', async () => {
+  const on = await setTorch($('torch').getAttribute('aria-pressed') !== 'true');
+  $('torch').setAttribute('aria-pressed', String(on));
+});
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) stopCamera(video);
@@ -158,15 +205,14 @@ $('scan').addEventListener('click', async () => {
     toast('Kameran är inte igång');
     return;
   }
-  const crop = captureGuide(video, $('guide'));
   const btn = $<HTMLButtonElement>('scan');
   btn.disabled = true;
   btn.textContent = 'Läser av…';
   try {
     const last = await db.lastOdo();
-    const r = await readOdometer(crop, last);
+    const r = await readOdometer(() => captureGuide(video, $('guide')), last);
     if (r.value === undefined) toast('Kunde inte läsa siffrorna – skriv in värdet');
-    await openConfirm(r.value, crop.toDataURL('image/jpeg', 0.8));
+    await openConfirm(r.value, r.frame.toDataURL('image/jpeg', 0.8));
   } catch (e) {
     console.error(e);
     toast('Avläsningen misslyckades – skriv in värdet');

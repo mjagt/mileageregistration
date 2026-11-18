@@ -31,7 +31,12 @@
         <div class="viewfinder">
           <video id="video" playsinline muted autoplay></video>
           <div class="guide" id="guide"></div>
-          <p class="hint">Rikta rutan mot mätarställningen</p>
+          <p class="hint">Zooma (nyp eller reglaget) tills siffrorna fyller rutan</p>
+          <div class="cam-controls">
+            <button type="button" id="torch" class="cam-btn" hidden aria-pressed="false" aria-label="Lampa">💡</button>
+            <input type="range" id="zoom" min="1" max="10" step="0.1" value="1" aria-label="Zoom" />
+            <span id="zoom-label" class="zoom-label">1×</span>
+          </div>
           <button id="cam-retry" class="cam-retry" hidden>Starta kamera</button>
         </div>
 

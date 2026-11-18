@@ -32,7 +32,7 @@ Allow the camera and location the first time.
 ## Usage
 
 1. **Registrera**: the slider shows Start/Slut automatically (Slut when a trip is in progress).
-2. Line up the box with the odometer → **Skanna**.
+2. Zoom in (pinch the camera view or use the slider) until the reading fills the box → **Skanna**. Use 💡 for the torch in the dark.
 3. Check the reading and the address (edit if needed) → **Spara**.
    For Slut, the distance is calculated, and Ärende and Tjänst/Privat are prefilled from the previous trip.
 4. **Resor**: list (tap to edit or delete), Excel export for a period, reg. number/driver, favourite places, backup.
@@ -44,6 +44,7 @@ Allow the camera and location the first time.
 ## Technology
 
 - Vite + TypeScript, `vite-plugin-pwa` (offline)
-- OCR: Tesseract.js on the device (digits only). The engine is served from the app's own origin; the language data is fetched once from jsDelivr and cached.
+- OCR, all on the device: the app finds the row of digits and crops to it. A seven-segment decoder reads LCD odometers, and Tesseract.js (digits only) reads several binarized versions of the crop. A value only counts once two reads agree, and up to two camera frames are tried. The engine is served from the app's own origin; the language data is fetched once from jsDelivr and cached.
+- Camera zoom uses the camera's own zoom where the browser exposes it (real extra detail, e.g. a telephoto lens), and otherwise enlarges the preview.
 - Addresses: Nominatim / OpenStreetMap (free, max 1 request/s)
 - Excel: SheetJS
