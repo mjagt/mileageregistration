@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1f4e79" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Körjournal" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <title>Körjournal</title>
+  </head>
+  <body>
+    <nav class="tabs">
+      <button data-view="scan" class="active">Registrera</button>
+      <button data-view="trips">Resor</button>
+    </nav>
+
+    <main>
+      <!-- Registrera -->
+      <section id="view-scan">
+        <div class="switch" id="mode" role="radiogroup" aria-label="Start eller slut">
+          <button type="button" data-mode="start" role="radio">Start</button>
+          <button type="button" data-mode="end" role="radio">Slut</button>
+          <span class="knob"></span>
+        </div>
+        <p id="status" class="muted"></p>
+
+        <div class="viewfinder">
+          <video id="video" playsinline muted autoplay></video>
+          <div class="guide" id="guide"></div>
+          <p class="hint">Rikta rutan mot mätarställningen</p>
+          <button id="cam-retry" class="cam-retry" hidden>Starta kamera</button>
+        </div>
+
+        <p id="loc" class="muted">Hämtar position…</p>
+        <button id="scan" class="primary big">Skanna</button>
+        <button id="manual" class="link">Ange manuellt</button>
+      </section>
+
+      <!-- Resor -->
+      <section id="view-trips" hidden>
+        <h2>Resor</h2>
+        <ul id="trip-list" class="trip-list"></ul>
+
+        <h2>Exportera</h2>
+        <div class="row">
+          <label>Från <input type="date" id="exp-from" /></label>
+          <label>Till <input type="date" id="exp-to" /></label>
+        </div>
+        <button id="export" class="primary">Exportera till Excel</button>
+
+        <h2>Inställningar</h2>
+        <label>Registreringsnummer <input id="set-regnr" autocapitalize="characters" /></label>
+        <label>Förare <input id="set-driver" autocomplete="name" /></label>
+
+        <h2>Favoritplatser</h2>
+        <p class="muted small">Positioner inom 150 m från en favoritplats får dess adress direkt.</p>
+        <ul id="place-list" class="place-list"></ul>
+
+        <h2>Backup</h2>
+        <div class="row">
+          <button id="backup">Spara backup</button>
+          <button id="restore">Läs in backup</button>
+          <input type="file" id="restore-file" accept="application/json,.json" hidden />
+        </div>
+      </section>
+    </main>
+
+    <!-- Bekräfta avläsning -->
+    <dialog id="confirm">
+      <form method="dialog" id="confirm-form">
+        <h3 id="c-title"></h3>
+        <img id="c-img" alt="Avläst bild" />
+        <label>Mätarställning (km)
+          <input id="c-odo" inputmode="numeric" pattern="[0-9]*" required autocomplete="off" />
+        </label>
+        <p id="c-warn" class="warn" hidden></p>
+        <label>Adress
+          <input id="c-addr" autocomplete="off" />
+        </label>
+        <p class="small"><span id="c-place" class="badge" hidden></span>
+          <button type="button" id="c-saveplace" class="link small">☆ Spara som favoritplats</button></p>
+        <div id="c-endfields">
+          <p class="km" id="c-km"></p>
+          <label>Ärende / besökt
+            <input id="c-purpose" list="purposes" autocomplete="off" />
+          </label>
+          <div class="seg" id="c-type">
+            <button type="button" data-type="tjänst">Tjänst</button>
+            <button type="button" data-type="privat">Privat</button>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" id="c-cancel">Avbryt</button>
+          <button type="submit" class="primary" id="c-save">Spara</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Redigera resa -->
+    <dialog id="edit">
+      <form method="dialog" id="edit-form">
+        <h3>Redigera resa</h3>
+        <fieldset>
+          <legend>Start</legend>
+          <label>Tid <input type="datetime-local" id="e-stime" required /></label>
+          <label>Mätarställning <input id="e-sodo" inputmode="numeric" required /></label>
+          <label>Adress <input id="e-saddr" /></label>
+        </fieldset>
+        <fieldset>
+          <legend>Slut</legend>
+          <label>Tid <input type="datetime-local" id="e-etime" /></label>
+          <label>Mätarställning <input id="e-eodo" inputmode="numeric" /></label>
+          <label>Adress <input id="e-eaddr" /></label>
+        </fieldset>
+        <label>Ärende / besökt <input id="e-purpose" list="purposes" /></label>
+        <div class="seg" id="e-type">
+          <button type="button" data-type="tjänst">Tjänst</button>
+          <button type="button" data-type="privat">Privat</button>
+        </div>
+        <p id="e-warn" class="warn" hidden></p>
+        <div class="actions">
+          <button type="button" id="e-delete" class="danger">Ta bort</button>
+          <button type="button" id="e-cancel">Avbryt</button>
+          <button type="submit" class="primary">Spara</button>
+        </div>
+      </form>
+    </dialog>
+
+    <datalist id="purposes"></datalist>
+    <p id="toast" class="toast" hidden></p>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
